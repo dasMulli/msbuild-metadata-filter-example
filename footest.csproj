@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard1.0</TargetFramework>
+    <FooRegEx>[\\/]foo\.(?&lt;arch&gt;x(\d*))\.(?&lt;version&gt;((\d+)(\.\d+)+))</FooRegEx>
+    <FooVersionToUse>17.5.50</FooVersionToUse>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FooFiles Include="mypkgs\foo*\binaries\**\*">
+      <FooArch>$([System.Text.RegularExpressions.Regex]::Match(%(Identity), $(FooRegEx)).get_Groups().get_Item("arch"))</FooArch>
+      <FooVersion>$([System.Text.RegularExpressions.Regex]::Match(%(Identity), $(FooRegEx)).get_Groups().get_Item("version"))</FooVersion>
+    </FooFiles>
+  </ItemGroup>
+
+  <Target Name="IncludeFoo" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <FooArchToUse Condition="'$(FooArchToUse)' == '' and '$(Platform)' != 'AnyCPU'">$(Platform)</FooArchToUse>
+      <FooArchToUse Condition="'$(FooArchToUse)' == ''">x64</FooArchToUse>
+    </PropertyGroup>
+    <ItemGroup>
+      <Content Include="@(FooFiles)" 
+              Link="foo\%(Filename)%(Extension)"
+              CopyToOutputDirectory="PreserveNewest"
+              Condition="'%(FooFiles.FooVersion)' == '$(FooVersionToUse)' and '%(FooFiles.FooArch)' == '$(FooArchToUse)'"/>
+    </ItemGroup>
+  </Target>
+
+</Project>
